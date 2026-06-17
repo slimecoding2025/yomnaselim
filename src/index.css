@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Override Tailwind base to not conflict with our cinematic styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
