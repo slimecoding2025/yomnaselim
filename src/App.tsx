@@ -372,6 +372,31 @@ function SiteNav() {
 
 /* ========== HERO SECTION ========== */
 function HeroSection() {
+  const messageButtons = [
+    {
+      label: 'افتحيها وقت تشتاقي لي',
+      title: 'يا يمنى، إذا اشتاقتِ إلي',
+      text: 'أعرف أنكِ قد تشتاقين إلي أحياناً، لكن اعلمي أنني أشتاق إليكِ أكثر مما تتخيلين. أنتِ ليستِ مجرد حب، أنتِ نِسمةٌ تُسكن قلبي كل وقت.'
+    },
+    {
+      label: 'افتحيها وقت تكوني حزينة',
+      title: 'إذا حزن قلبكِ',
+      text: 'عندما تكونين حزينة، خذي هذه الرسالة كأنني أحملها لكِ بنفسي. سأظلّ أنتظرُ ابتسامتكِ وأُعيدُ إليكِ الأمان الذي يختبئ في عينيّ.'
+    },
+    {
+      label: 'افتحيها في عيد ميلادك',
+      title: 'في عيد ميلادكِ الجميل',
+      text: 'أهنئكِ في هذا اليوم الذي وُلدتِ فيه أجمل روح. أتمناها لكِ مليئة بالحب والضحكة والدفء، وأُعيد لكِ كل ما هو جميل في هذا العالم.'
+    },
+    {
+      label: 'افتحيها وقت تحتاجيني',
+      title: 'إذا احتجتِ إليَّ',
+      text: 'لو شعرتِ أن الدنيا ثقيلة، فهذه الرسالة تذكيرٌ بأنني هنا. لا تحتاجينِ إلى كلمةٍ كثيرة، فقط إليّ، وسأكونُ قريباً من قلبكِ دائماً.'
+    }
+  ];
+
+  const [activeMessage, setActiveMessage] = useState<(typeof messageButtons)[number] | null>(null);
+
   return (
     <section className="hero-section" id="hero">
       <div className="hero-bg" />
@@ -397,6 +422,20 @@ function HeroSection() {
             </div>
           ))}
         </div>
+
+        <div className="message-buttons-row">
+          {messageButtons.map((button, i) => (
+            <button
+              key={i}
+              type="button"
+              className="message-button"
+              onClick={() => setActiveMessage(button)}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+
         <div style={{ marginTop: '1.5rem', fontFamily: 'var(--font-poetry)', fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
           ✦ مدة الحب منذ البداية ✦
         </div>
@@ -406,6 +445,24 @@ function HeroSection() {
         <span className="hero-scroll-text">اكتشف القصة</span>
         <div className="hero-scroll-arrow" />
       </div>
+
+      {activeMessage && (
+        <div className="message-modal-overlay" onClick={() => setActiveMessage(null)}>
+          <div className="message-modal" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              className="message-modal-close"
+              onClick={() => setActiveMessage(null)}
+              aria-label="إغلاق"
+            >
+              ×
+            </button>
+            <div className="message-modal-icon">💌</div>
+            <h3 className="message-modal-title">{activeMessage.title}</h3>
+            <p className="message-modal-text">{activeMessage.text}</p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
