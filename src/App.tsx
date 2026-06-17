@@ -860,10 +860,18 @@ function MusicPlayer() {
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [trackIndex, setTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const vizRef = useRef<(HTMLDivElement | null)[]>([]);
   const vizAnimRef = useRef<number>(0);
 
+  const songs = [
+    { id: 'qalbi', title: 'أغنية قلبي', file: '/audio/qalbi.mp3' },
+    { id: 'yomna', title: 'أغنية يمنى', file: '/audio/yomna.mp3' },
+    { id: 'omry', title: 'أغنية عمري', file: '/audio/omry.mp3' },
+  ];
+
+  const currentSong = songs[trackIndex];
   const bars = Array.from({ length: 20 }, (_, i) => i);
 
   const animateViz = useCallback(() => {
@@ -937,6 +945,29 @@ function MusicPlayer() {
     if (audioRef.current) audioRef.current.volume = vol / 100;
   };
 
+  const changeTrack = async (direction: number) => {
+    const audio = audioRef.current;
+    const nextIndex = (trackIndex + direction + songs.length) % songs.length;
+    setTrackIndex(nextIndex);
+    setCurrentTime(0);
+    setProgress(0);
+    setDuration(0);
+
+    if (!audio) return;
+
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = songs[nextIndex].file;
+      audio.load();
+      if (playing) {
+        await audio.play();
+      }
+    } catch (error) {
+      // ignore autoplay restrictions
+    }
+  };
+
   return (
     <section className="music-section" id="music">
       <div className="music-player-wrap">
@@ -951,7 +982,7 @@ function MusicPlayer() {
         <audio
           ref={audioRef}
           id="loveSong"
-          src="/audio/qalbi.mp3"
+          src={currentSong.file}
           loop
           onLoadedMetadata={() => {
             const audio = audioRef.current;
@@ -983,7 +1014,7 @@ function MusicPlayer() {
               alt="غلاف الأغنية"
             />
             <div className="music-info">
-              <div className="music-title">أغنية يمنى</div>
+              <div className="music-title">{currentSong.title}</div>
               <div className="music-artist">مهداة من سليم بكل محبة ❤️</div>
               <div
                 className="music-heart-icon"
@@ -1022,13 +1053,20 @@ function MusicPlayer() {
 
           {/* Controls */}
           <div className="music-controls">
-            <button className="music-btn" title="عشوائي">🔀</button>
-            <button className="music-btn" title="السابقة" onClick={() => { setCurrentTime(0); setProgress(0); }}>⏮</button>
+            <button className="music-btn" title="عشوائي" onClick={() => changeTrack(1)}>🔀</button>
+            <button className="music-btn" title="السابقة" onClick={() => changeTrack(-1)}>⏮</button>
             <button className="music-btn-play" onClick={togglePlay} title={playing ? 'إيقاف' : 'تشغيل'}>
               {playing ? '⏸' : '▶'}
             </button>
-            <button className="music-btn" title="التالية">⏭</button>
-            <button className="music-btn" title="تكرار">🔁</button>
+            <button className="music-btn" title="التالية" onClick={() => changeTrack(1)}>⏭</button>
+            <button className="music-btn" title="تكرار" onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = 0;
+                setCurrentTime(0);
+                setProgress(0);
+                if (playing) audioRef.current.play().catch(() => {});
+              }
+            }}>🔁</button>
           </div>
 
           {/* Volume */}
@@ -1119,6 +1157,37 @@ function ScrollObserver() {
 export default function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [appVisible, setAppVisible] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const startMusic = async () => {
+      try {
+        audio.volume = 0.3;
+        audio.loop = true;
+        await audio.play();
+        document.documentElement.classList.add('music-on');
+      } catch {
+        // Autoplay may be blocked until user interaction.
+      }
+    };
+
+    void startMusic();
+
+    const handleFirstInteraction = () => {
+      void startMusic();
+    };
+
+    window.addEventListener('click', handleFirstInteraction, { once: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, []);
 
   const handleUnlock = () => {
     setUnlocked(true);
@@ -1127,6 +1196,13 @@ export default function App() {
 
   return (
     <>
+      <audio
+        ref={audioRef}
+        src="/audio/music.mp3"
+        preload="auto"
+        loop
+        style={{ display: 'none' }}
+      />
       {!unlocked && <EntryPage onUnlock={handleUnlock} />}
 
       <div className={`main-app${appVisible ? ' visible' : ''}`} style={{ display: unlocked ? 'block' : 'none' }}>
